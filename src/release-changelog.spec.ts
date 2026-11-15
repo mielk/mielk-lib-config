@@ -22,6 +22,16 @@ describe('releaseChangelog', () => {
         );
     });
 
+    it('keeps the Windows line endings of a CRLF file, also in the inserted lines', () => {
+        const crlf = (text: string): string => text.replace(/\n/g, '\r\n');
+        const changelog = crlf(`${HEADER}## [Unreleased]\n\n### Fixed\n\n- Fix.\n\n${OLD}`);
+        const released = releaseChangelog(changelog, '1.0.1', '2026-11-15');
+        expect(released).toBe(
+            crlf(`${HEADER}## [Unreleased]\n\n## [1.0.1] - 2026-11-15\n\n### Fixed\n\n- Fix.\n\n${OLD}`),
+        );
+        expect(released.replace(/\r\n/g, '')).not.toContain('\n');
+    });
+
     it('stops at a version heading of level three left by standard-version', () => {
         const legacy = '### [1.2.6](https://example.com) (2026-04-03)\n\n### Bug Fixes\n\n- Old fix.\n';
         const changelog = `${HEADER}## [Unreleased]\n\n### Fixed\n\n- Fix.\n\n${legacy}`;

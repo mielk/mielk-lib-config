@@ -12,10 +12,17 @@ const UNRELEASED = '## [Unreleased]';
  * @param changelog Content of CHANGELOG.md.
  * @param version The released version, e.g. `2.0.0`.
  * @param date Release date as `YYYY-MM-DD`.
- * @returns The new content; Unreleased stays as an empty section on top.
+ * @returns The new content; Unreleased stays as an empty section on top. A file with Windows line endings (CRLF) keeps
+ *   them in the whole content, also in the inserted lines, so a working copy with `core.autocrlf` gets no mixed endings.
  * @throws {Error} When there is no Unreleased section, it has no entry, or the version is already listed.
  */
 export const releaseChangelog = (changelog: string, version: string, date: string): string => {
+    if (!changelog.includes('\r\n')) return releaseLf(changelog, version, date);
+    return releaseLf(changelog.replace(/\r\n/g, '\n'), version, date).replace(/\n/g, '\r\n');
+};
+
+/** {@link releaseChangelog} for content with LF line endings only. */
+const releaseLf = (changelog: string, version: string, date: string): string => {
     const start = changelog.indexOf(UNRELEASED);
     if (start === -1) throw new Error(`CHANGELOG.md has no "${UNRELEASED}" section.`);
     if (changelog.includes(`## [${version}]`)) throw new Error(`CHANGELOG.md already has a section for ${version}.`);

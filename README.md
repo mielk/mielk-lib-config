@@ -54,10 +54,10 @@ npm install --save-dev --save-exact @mielk/lib-config typescript @types/node esl
 | `@mielk/lib-config/prettier`            | Prettier options of `ts:LNT-2`: 4 spaces, single quotes, semicolons, trailing commas, width 120                         | Prettier     |
 | `@mielk/lib-config/vitest`              | `mielkVitest(options)`, `coverageDirectory(name)`, `COVERAGE_THRESHOLD`; type `MielkVitestOptions`                      | Node.js only |
 
-| Command (`bin`)           | Purpose                                                                                                                         |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `mielk-check-package`     | `publint --strict`, `attw --pack . --profile esm-only` and the file list of `npm pack` (`npm:PAC-1`, `PAC-3`); exit code 0 or 1 |
-| `mielk-release-changelog` | `version` script of `npm version`: moves the entries of `## [Unreleased]` to `## [<version>] - <date>` (`npm:CHG-1`)            |
+| Command (`bin`)           | Purpose                                                                                                                                                                                     |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mielk-check-package`     | `publint --strict`, `attw --pack . --profile esm-only` and the file list of `npm pack` (`npm:PAC-1`, `PAC-3`); exit code 0 or 1, a missing tool gives a one-line message, not a stack trace |
+| `mielk-release-changelog` | `version` script of `npm version`: moves the entries of `## [Unreleased]` to `## [<version>] - <date>` (`npm:CHG-1`); keeps the line endings of the file (LF or CRLF)                       |
 
 Each export is documented with TSDoc in the source; editors show the description, parameters and errors.
 
