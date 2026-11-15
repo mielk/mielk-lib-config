@@ -4,6 +4,12 @@
 import { spawnSync, type SpawnSyncOptionsWithStringEncoding } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
+import { z } from 'zod';
+
+/** Output of `npm pack --json` for one package: only the file list is used (ts:TYP-2). */
+const packOutputSchema = z.tuple([z.object({ files: z.array(z.object({ path: z.string() })) })]);
+/** The part of the `package.json` of a tool package that names its commands (ts:TYP-2). */
+const binManifestSchema = z.object({ bin: z.union([z.string(), z.record(z.string(), z.string())]).optional() });
 
 const ROOT_FILES = new Set(['package.json', 'README.md', 'LICENSE', 'CHANGELOG.md']);
 
@@ -25,14 +31,15 @@ export const isAllowedPackFile = (path: string): boolean => {
  *
  * @param packJson Output of `npm pack --dry-run --json`.
  * @returns Paths of the files that break npm:PAC-1, in the order of the output.
- * @throws {Error} When the output is not the JSON array printed by `npm pack --json`.
+ * @throws {Error} When the output is not the JSON array printed by `npm pack --json`, or its entry has no list of
+ *   files with string paths.
  */
 export const disallowedPackFiles = (packJson: string): string[] => {
     const parsed: unknown = JSON.parse(packJson);
     if (!Array.isArray(parsed) || parsed.length !== 1) throw new Error('Expected the output of npm pack --json.');
-    const files: unknown = (parsed[0] as { files?: unknown }).files;
-    if (!Array.isArray(files)) throw new Error('The output of npm pack --json has no file list.');
-    return files.map((file) => (file as { path: string }).path).filter((path) => !isAllowedPackFile(path));
+    const output = packOutputSchema.safeParse(parsed);
+    if (!output.success) throw new Error('The output of npm pack --json has no file list.');
+    return output.data[0].files.map((file) => file.path).filter((path) => !isAllowedPackFile(path));
 };
 
 /**
@@ -49,9 +56,10 @@ export const findPackageBin = (name: string, command: string, folder: string): s
     for (let dir = resolve(folder); ; dir = dirname(dir)) {
         const manifest = join(dir, 'node_modules', name, 'package.json');
         if (existsSync(manifest)) {
-            const bin: unknown = (JSON.parse(readFileSync(manifest, 'utf8')) as { bin?: unknown }).bin;
-            const path = typeof bin === 'string' ? bin : (bin as Record<string, unknown> | undefined)?.[command];
-            if (typeof path !== 'string') throw new Error(`Package ${name} has no command ${command}.`);
+            const parsed = binManifestSchema.safeParse(JSON.parse(readFileSync(manifest, 'utf8')));
+            const bin = parsed.success ? parsed.data.bin : undefined;
+            const path = typeof bin === 'string' ? bin : bin?.[command];
+            if (path === undefined) throw new Error(`Package ${name} has no command ${command}.`);
             return join(dirname(manifest), path);
         }
         if (dirname(dir) === dir) break;

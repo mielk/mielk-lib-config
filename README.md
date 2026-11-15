@@ -13,15 +13,16 @@ Files that must stay in the repository of each library (`.gitattributes`, `.nvmr
 ## Requirements
 
 - Node.js 24 or later (`engines.node: >=24`); development uses the version in `.nvmrc` (24.13.0).
-- TypeScript 5.5 or later: the build configuration uses `${configDir}`, so paths are relative to the library and
-  not to this package.
+- TypeScript 5.8 or later (`^5.8`, checked with 5.8.2; 5.7 rejects `erasableSyntaxOnly`): the build configuration
+  uses `target` and `lib` `ES2024`, `erasableSyntaxOnly` and `${configDir}` (so paths are relative to the library and
+  not to this package).
 - Peer dependencies, installed by the library in `devDependencies` with exact versions (`ts:DEP-1`, `npm:ZAL-2`).
   npm links only the commands of direct dependencies to `node_modules/.bin`, so the scripts of the library
   (`eslint .`, `prettier --check .`, `vitest`, `tsc`) need them installed by the library itself:
 
     | Peer dependency         | Range   | Needed by                                                                   |
     | ----------------------- | ------- | --------------------------------------------------------------------------- |
-    | `typescript`            | `^5.5`  | `./tsconfig.json`, `./tsconfig.build.json`; scripts `typecheck` and `build` |
+    | `typescript`            | `^5.8`  | `./tsconfig.json`, `./tsconfig.build.json`; scripts `typecheck` and `build` |
     | `@types/node`           | `^24`   | `./tsconfig.json` (`types: ["node"]`)                                       |
     | `eslint`                | `^10`   | `./eslint`; script `lint`                                                   |
     | `prettier`              | `^3`    | `./prettier`; scripts `format` and `format:check`                           |
@@ -157,16 +158,38 @@ The package uses its own configuration: `eslint.config.js` and `vitest.config.ts
 
 ## Releasing a new version
 
+The package is at `0.0.0` in the repository; `1.0.0` is its first release. The commit message of a release is
+`Release <version> (<TASK-ID>)` followed by the footer of the agent that makes it (`npm:WYD-3`, `CLAUDE.md`
+section 10); `%s` is replaced by `npm` with the version.
+
 1. Add the changes under `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md). Changing a rule, an option or a peer
    dependency range that can make the checks of a library fail is a breaking change (major version, entry starting
    with `**Breaking:**` and the migration steps, `npm:SEM-1`, `npm:CHG-3`).
-2. `npm version <major|minor|patch> -m "Release %s (<TASK-ID>)"` on the current `master` (`npm:WYD-1`, `WYD-3`). Its
-   `version` script builds the package and runs `mielk-release-changelog` from `dist`. Push with
-   `git push --follow-tags` (`npm:WYD-4`).
-3. The user starts the `CI` workflow on the tag `v<version>` (`workflow_dispatch`); the `publish` job publishes the
-   package with trusted publishing (`npm:PUB-1`, `PUB-5`). Agents do not publish.
-4. Raise `@mielk/lib-config` in `devDependencies` of `mielk-npm-tools`: `mielk-lib sync` takes the template versions
-   from the package installed there, and libraries pick up the new version with `mielk-lib sync`.
+2. Prepare the version on the current `master`, with a clean working tree (`npm:WYD-1`). The `version` script builds
+   the package and runs `mielk-release-changelog` from `dist`, which moves the entries to the new section. For the
+   first release, `npm version major` turns `0.0.0` into `1.0.0`; later releases use `major`, `minor` or `patch`:
+
+    ```bash
+    npm version major -m $'Release %s (<TASK-ID>)
+    ```
+
+Agent: <agent name>
+Co-Authored-By: Claude <model> <noreply@anthropic.com>'
+git push --follow-tags # npm:WYD-4
+
+```
+
+3. First release (`1.0.0`), done by the user: from the tag `v1.0.0` run `npm publish --access public` on the npm
+account with 2FA (the `prepublishOnly` script runs the checks and the package check first). The package does not
+exist in the registry before,, so trusted publishing cannot be configured earlier (`npm:PUB-5`).
+4. After the first release the user sets up the publication without long-lived tokens (`npm:PUB-5`), on npmjs.com in
+the settings of the package: the trusted publisher (repository `mielk/mielk-lib-config`, workflow file `ci.yml`,
+direct `npm publish` allowed) and "Require two-factor authentication and disallow tokens". The repository has no
+npm token in its secrets.
+5. Later releases: the user starts the `CI` workflow on the tag `v<version>` (`workflow_dispatch`); its `publish` job
+publishes the package with trusted publishing (`npm:PUB-1`, `PUB-5`). Agents have no npm token and do not publish.
+6. Raise `@mielk/lib-config` in `devDependencies` of `mielk-npm-tools`: `mielk-lib sync` takes the template versions
+from the package installed there, and libraries pick up the new version with `mielk-lib sync`.
 
 ## Releases and changes
 
@@ -184,3 +207,4 @@ comments of every export and [CHANGELOG.md](CHANGELOG.md) are the complete docum
 ## License
 
 [MIT](LICENSE)
+```

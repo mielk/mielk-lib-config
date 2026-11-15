@@ -45,6 +45,15 @@ describe('disallowedPackFiles', () => {
     it('throws when the output is not a single-package array', () => {
         expect(() => disallowedPackFiles('{}')).toThrow('Expected the output of npm pack --json.');
         expect(() => disallowedPackFiles('[]')).toThrow('Expected the output of npm pack --json.');
+        expect(() => disallowedPackFiles('[{"files":[]},{"files":[]}]')).toThrow(
+            'Expected the output of npm pack --json.',
+        );
+    });
+
+    it('throws on a malformed entry of the output (ts:TYP-2)', () => {
+        for (const json of ['[null]', '[1]', '[[]]', '[{"files":"x"}]', '[{"files":[{}]}]', '[{"files":[null]}]']) {
+            expect(() => disallowedPackFiles(json), json).toThrow('has no file list');
+        }
     });
 
     it('throws when the package has no file list', () => {
@@ -94,6 +103,13 @@ describe('findPackageBin', () => {
         expect(() => findPackageBin('publint', 'publint', root)).toThrow('Package publint has no command publint.');
         installFake(root, 'nobin', undefined);
         expect(() => findPackageBin('nobin', 'nobin', root)).toThrow('Package nobin has no command nobin.');
+    });
+
+    it('treats a malformed bin field as a missing command (ts:TYP-2)', () => {
+        for (const bin of [42, null, ['x.js'], { publint: 1 }]) {
+            installFake(root, 'publint', bin);
+            expect(() => findPackageBin('publint', 'publint', root)).toThrow('Package publint has no command publint.');
+        }
     });
 
     it('throws when the package is not installed', () => {

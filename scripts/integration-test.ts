@@ -7,16 +7,19 @@
 // is not part of `npm test` (ts:TST-5); CI runs it after the build.
 // Usage: npm run build && npm run test:integration [-- --keep]   (--keep leaves the temp folder for inspection)
 // Node.js runs this TypeScript file directly by stripping its types, so the file uses only erasable syntax and
-// imports nothing but Node.js modules.
+// imports only Node.js modules and zod.
 import { spawnSync, type SpawnSyncOptionsWithStringEncoding } from 'node:child_process';
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { z } from 'zod';
 
-type Manifest = {
-    peerDependencies: Record<string, string>;
-    devDependencies: Record<string, string>;
-};
+// JSON read from files and from `npm pack` is validated at the boundary (ts:TYP-2); the sample manifest keeps all its
+// other fields, because the script writes it back.
+const versions = z.record(z.string(), z.string());
+const ownManifestSchema = z.object({ peerDependencies: versions, devDependencies: versions });
+const sampleManifestSchema = z.looseObject({ devDependencies: versions.optional() });
+const packListSchema = z.tuple([z.object({ filename: z.string() })]);
 
 const root = resolve(import.meta.dirname, '..');
 const keep = process.argv.includes('--keep');
@@ -48,19 +51,20 @@ try {
     if (!existsSync(join(root, 'dist', 'eslint.js'))) fail('dist/ is missing; run npm run build first.');
     const packed = npm(root, ['pack', '--pack-destination', work, '--json'], true);
     if (packed.status !== 0) fail('npm pack');
-    const [info] = JSON.parse(packed.stdout) as { filename: string }[];
-    const tarball = join(work, info?.filename ?? fail('npm pack printed no package'));
+    const list = packListSchema.safeParse(JSON.parse(packed.stdout));
+    const tarball = join(work, list.success ? list.data[0].filename : fail('npm pack printed no package'));
 
     const sample = join(work, 'sample-lib');
     cpSync(join(root, 'fixtures', 'sample-lib'), sample, { recursive: true });
-    const own = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as Manifest;
+    const own = ownManifestSchema.parse(JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')));
     const manifestPath = join(sample, 'package.json');
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as Manifest;
-    manifest.devDependencies = { '@mielk/lib-config': `file:${tarball}` };
+    const manifest = sampleManifestSchema.parse(JSON.parse(readFileSync(manifestPath, 'utf8')));
+    const devDependencies: Record<string, string> = { '@mielk/lib-config': `file:${tarball}` };
     for (const name of Object.keys(own.peerDependencies)) {
-        manifest.devDependencies[name] =
+        devDependencies[name] =
             own.devDependencies[name] ?? fail(`peer dependency ${name} has no version in devDependencies (npm:ZAL-2)`);
     }
+    manifest.devDependencies = devDependencies;
     writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 4)}\n`);
 
     console.log(`\n> npm install (${sample})`);

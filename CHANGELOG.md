@@ -14,3 +14,4 @@ Entries are written by hand; `npm version` moves them from Unreleased to the rel
 - Entry point `./vitest`: `mielkVitest({ name, include?, coverageInclude? })` with v8 coverage, an 80% line and branch threshold and the report in the system temp folder (TASK-210).
 - Command `mielk-check-package`: `publint --strict`, `attw --pack . --profile esm-only` and the check of the package file list in one command (TASK-210).
 - Command `mielk-release-changelog`: the changelog step of `npm version` (TASK-210).
+- Dependency `zod`: validates the JSON read by `mielk-check-package` (TASK-210).
