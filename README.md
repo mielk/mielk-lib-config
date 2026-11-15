@@ -178,16 +178,16 @@ section 10); `%s` is replaced by `npm` with the version.
     ```
 
 3. First release (`1.0.0`), done by the user: from the tag `v1.0.0` run `npm publish --access public` on the npm
-account with 2FA (the `prepublishOnly` script runs the checks and the package check first). The package does not
-exist in the registry before, so trusted publishing cannot be configured earlier (`npm:PUB-5`).
+   account with 2FA (the `prepublishOnly` script runs the checks and the package check first). The package does not
+   exist in the registry before, so trusted publishing cannot be configured earlier (`npm:PUB-5`).
 4. After the first release the user sets up the publication without long-lived tokens (`npm:PUB-5`), on npmjs.com in
-the settings of the package: the trusted publisher (repository `mielk/mielk-lib-config`, workflow file `ci.yml`,
-direct `npm publish` allowed) and "Require two-factor authentication and disallow tokens". The repository has no
-npm token in its secrets.
+   the settings of the package: the trusted publisher (repository `mielk/mielk-lib-config`, workflow file `ci.yml`,
+   direct `npm publish` allowed) and "Require two-factor authentication and disallow tokens". The repository has no
+   npm token in its secrets.
 5. Later releases: the user starts the `CI` workflow on the tag `v<version>` (`workflow_dispatch`); its `publish` job
-publishes the package with trusted publishing (`npm:PUB-1`, `PUB-5`). Agents have no npm token and do not publish.
+   publishes the package with trusted publishing (`npm:PUB-1`, `PUB-5`). Agents have no npm token and do not publish.
 6. Raise `@mielk/lib-config` in `devDependencies` of `mielk-npm-tools`: `mielk-lib sync` takes the template versions
-from the package installed there, and libraries pick up the new version with `mielk-lib sync`.
+   from the package installed there, and libraries pick up the new version with `mielk-lib sync`.
 
 ## Releases and changes
 
