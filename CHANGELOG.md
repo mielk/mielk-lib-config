@@ -6,6 +6,8 @@ Entries are written by hand; `npm version` moves them from Unreleased to the rel
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-15
+
 ### Added
 
 - Entry points `./tsconfig.json` and `./tsconfig.build.json`: compiler options of the mielk TypeScript standard and the build to `dist/` with declarations, with paths relative to the library (`${configDir}`) (TASK-210).
