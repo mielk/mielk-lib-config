@@ -171,17 +171,15 @@ section 10); `%s` is replaced by `npm` with the version.
 
     ```bash
     npm version major -m $'Release %s (<TASK-ID>)
+
+    Agent: <agent name>
+    Co-Authored-By: Claude <model> <noreply@anthropic.com>'
+    git push --follow-tags # npm:WYD-4
     ```
-
-Agent: <agent name>
-Co-Authored-By: Claude <model> <noreply@anthropic.com>'
-git push --follow-tags # npm:WYD-4
-
-```
 
 3. First release (`1.0.0`), done by the user: from the tag `v1.0.0` run `npm publish --access public` on the npm
 account with 2FA (the `prepublishOnly` script runs the checks and the package check first). The package does not
-exist in the registry before,, so trusted publishing cannot be configured earlier (`npm:PUB-5`).
+exist in the registry before, so trusted publishing cannot be configured earlier (`npm:PUB-5`).
 4. After the first release the user sets up the publication without long-lived tokens (`npm:PUB-5`), on npmjs.com in
 the settings of the package: the trusted publisher (repository `mielk/mielk-lib-config`, workflow file `ci.yml`,
 direct `npm publish` allowed) and "Require two-factor authentication and disallow tokens". The repository has no
@@ -207,4 +205,3 @@ comments of every export and [CHANGELOG.md](CHANGELOG.md) are the complete docum
 ## License
 
 [MIT](LICENSE)
-```
