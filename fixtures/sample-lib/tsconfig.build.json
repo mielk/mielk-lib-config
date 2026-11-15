@@ -1,0 +1,3 @@
+{
+    "extends": "@mielk/lib-config/tsconfig.build.json"
+}

@@ -1,0 +1,44 @@
+{
+    "name": "@mielk/sample",
+    "version": "1.0.0",
+    "description": "Sample library of the integration test of @mielk/lib-config; never published.",
+    "type": "module",
+    "engines": {
+        "node": ">=24"
+    },
+    "scripts": {
+        "test": "vitest run --coverage",
+        "build": "npm run clean && tsc -p tsconfig.build.json",
+        "clean": "node -e \"const fs = require('node:fs'); for (const e of fs.existsSync('dist') ? fs.readdirSync('dist') : []) fs.rmSync('dist/' + e, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 })\"",
+        "typecheck": "tsc --noEmit",
+        "lint": "eslint . --max-warnings 0",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "check:package": "mielk-check-package",
+        "prepublishOnly": "npm run typecheck && npm run lint && npm test && npm run build && npm run check:package",
+        "version": "mielk-release-changelog && git add CHANGELOG.md"
+    },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
+        }
+    },
+    "prettier": "@mielk/lib-config/prettier",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/mielk/mielk-sample.git"
+    },
+    "author": "mielk",
+    "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    },
+    "homepage": "https://github.com/mielk/mielk-sample#readme",
+    "files": [
+        "dist",
+        "CHANGELOG.md"
+    ],
+    "devDependencies": {}
+}

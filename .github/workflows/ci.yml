@@ -1,0 +1,59 @@
+# Checks every push to master and every pull request; publishes to npm only in a run started by the user
+# (workflow_dispatch) on a release tag v<version> (npm:PUB-1). Starting that run is the user's consent to
+# publish; agents do not start it. Publication uses npm trusted publishing (OIDC), without npm tokens (npm:PUB-5).
+name: CI
+
+on:
+    push:
+        branches: [master]
+    pull_request:
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+jobs:
+    check:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+            - uses: actions/setup-node@v6
+              with:
+                  node-version-file: .nvmrc
+            # Order of npm:PUB-2; any failure stops the run and the publication.
+            - run: npm ci
+            - run: npm run format:check
+            - run: npm run lint
+            - run: npm run typecheck
+            - run: npm test
+            - run: npm run build
+            - run: npm run check:package
+            # Installs the packed package in a copy of fixtures/sample-lib and runs its checks (plan TASK-210, K5).
+            - run: npm run test:integration
+            # All dependencies, not only production ones: the peer dependencies of this package are the tools every
+            # library installs (plan TASK-210, chapter 9).
+            - run: npm audit --audit-level=high
+
+    publish:
+        needs: check
+        if: github.event_name == 'workflow_dispatch'
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            id-token: write
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+            - uses: actions/setup-node@v6
+              with:
+                  node-version-file: .nvmrc
+                  registry-url: https://registry.npmjs.org
+            - name: Check the release tag (npm:PUB-4)
+              run: |
+                  test "$GITHUB_REF_TYPE" = "tag" || { echo "Run the workflow on a release tag v<version>, not on a branch."; exit 1; }
+                  test "$GITHUB_REF_NAME" = "v$(node -p "require('./package.json').version")" || { echo "Tag $GITHUB_REF_NAME does not match the version in package.json."; exit 1; }
+                  git merge-base --is-ancestor "$GITHUB_SHA" origin/master || { echo "The tagged commit is not on master."; exit 1; }
+            - run: npm ci
+            # prepublishOnly repeats typecheck, lint, tests, build and the package check before the upload.
+            - run: npm publish

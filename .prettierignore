@@ -1,0 +1,6 @@
+dist/
+coverage/
+reports/
+package-lock.json
+doc/reviews/
+fixtures/

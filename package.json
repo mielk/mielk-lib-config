@@ -1,0 +1,84 @@
+{
+    "name": "@mielk/lib-config",
+    "version": "0.0.0",
+    "description": "Shared TypeScript, ESLint, Prettier and Vitest configuration and release commands for the mielk npm libraries.",
+    "type": "module",
+    "engines": {
+        "node": ">=24"
+    },
+    "scripts": {
+        "test": "vitest run --coverage",
+        "test:watch": "vitest",
+        "test:integration": "node scripts/integration-test.ts",
+        "build": "npm run clean && tsc -p tsconfig.build.json && node scripts/copy-config.ts",
+        "clean": "node -e \"const fs = require('node:fs'); for (const e of fs.existsSync('dist') ? fs.readdirSync('dist') : []) fs.rmSync('dist/' + e, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 })\"",
+        "typecheck": "tsc --noEmit",
+        "lint": "eslint . --max-warnings 0",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "check:package": "node dist/bin/check-package.js",
+        "prepublishOnly": "npm run typecheck && npm run lint && npm test && npm run build && npm run check:package",
+        "version": "npm run build && node dist/bin/release-changelog.js && git add CHANGELOG.md"
+    },
+    "bin": {
+        "mielk-check-package": "./dist/bin/check-package.js",
+        "mielk-release-changelog": "./dist/bin/release-changelog.js"
+    },
+    "exports": {
+        "./eslint": {
+            "types": "./dist/eslint.d.ts",
+            "import": "./dist/eslint.js",
+            "default": "./dist/eslint.js"
+        },
+        "./vitest": {
+            "types": "./dist/vitest.d.ts",
+            "import": "./dist/vitest.js",
+            "default": "./dist/vitest.js"
+        },
+        "./tsconfig.json": "./dist/config/tsconfig.json",
+        "./tsconfig.build.json": "./dist/config/tsconfig.build.json",
+        "./prettier": "./dist/config/prettier.json"
+    },
+    "prettier": "./config/prettier.json",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/mielk/mielk-lib-config.git"
+    },
+    "author": "mielk",
+    "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    },
+    "bugs": {
+        "url": "https://github.com/mielk/mielk-lib-config/issues"
+    },
+    "homepage": "https://github.com/mielk/mielk-lib-config#readme",
+    "files": [
+        "dist",
+        "CHANGELOG.md"
+    ],
+    "dependencies": {
+        "@eslint/js": "^10.0.1",
+        "typescript-eslint": "^8.72.2"
+    },
+    "peerDependencies": {
+        "@arethetypeswrong/cli": "^0.18",
+        "@types/node": "^24",
+        "@vitest/coverage-v8": "^5",
+        "eslint": "^10",
+        "prettier": "^3",
+        "publint": "^0.3",
+        "typescript": "^5.5",
+        "vitest": "^5"
+    },
+    "devDependencies": {
+        "@arethetypeswrong/cli": "0.18.5",
+        "@types/node": "24.19.2",
+        "@vitest/coverage-v8": "5.1.0",
+        "eslint": "10.14.0",
+        "prettier": "3.10.1",
+        "publint": "0.3.25",
+        "typescript": "5.9.2",
+        "vitest": "5.1.0"
+    }
+}
