@@ -15,7 +15,9 @@ const UNRELEASED = '## [Unreleased]';
  * @returns The new content; Unreleased stays as an empty section on top. Existing lines are left byte for byte, so a
  *   file with mixed line endings stays mixed; the inserted lines use the ending of the Unreleased heading line (the
  *   first ending of the file when the heading is the last line, LF when the file has none). The content ends with
- *   exactly one line ending, with or without a trailing newline in the input, so no empty line is added at the end.
+ *   exactly one line ending, with or without a trailing newline in the input, so no empty line is added at the end
+ *   (extra empty lines at the end of an older release are dropped too). The last entry of Unreleased keeps its own
+ *   line ending.
  * @throws {Error} When there is no Unreleased section, it has no entry, or the version is already listed.
  */
 export const releaseChangelog = (changelog: string, version: string, date: string): string => {
@@ -30,10 +32,17 @@ export const releaseChangelog = (changelog: string, version: string, date: strin
     const body = changelog.slice(bodyStart, bodyEnd);
     if (!/^- /m.test(body))
         throw new Error(`"${UNRELEASED}" has no entries; a version without changes is not released.`);
-    const entries = body.trim();
-    const rest = changelog.slice(bodyEnd);
-    const section = `${eol}${eol}## [${version}] - ${date}${eol}${eol}${entries}${eol}`;
-    return `${changelog.slice(0, bodyStart)}${section}${rest === '' ? '' : eol}${rest}`;
+    // The last entry keeps its own line ending; blank lines after it are dropped.
+    const text = body.replace(/^\s+/, '');
+    const entries = text.trimEnd();
+    const entriesEol = /\r?\n/.exec(text.slice(entries.length))?.[0] ?? eol;
+    // The end of the file is normalized to one line ending: the one of the last line, or the Unreleased one.
+    const restText = changelog.slice(bodyEnd);
+    const restCore = restText.replace(/(?:\r?\n[ \t]*)+$/, '');
+    const restEol = /\r?\n/.exec(restText.slice(restCore.length))?.[0] ?? eol;
+    const rest = restCore === '' ? '' : `${eol}${restCore}${restEol}`;
+    const section = `${eol}${eol}## [${version}] - ${date}${eol}${eol}${entries}${entriesEol}`;
+    return `${changelog.slice(0, bodyStart)}${section}${rest}`;
 };
 
 /**

@@ -52,6 +52,28 @@ describe('releaseChangelog', () => {
         );
     });
 
+    it('normalizes the end of the file after an older release to one line ending', () => {
+        const base = `${HEADER}## [Unreleased]\n\n- New.\n\n## [1.0.0]\n\n- Old.`;
+        const want = `${HEADER}## [Unreleased]\n\n## [1.1.0] - 2026-11-16\n\n- New.\n\n## [1.0.0]\n\n- Old.\n`;
+        for (const tail of ['', '\n', '\n\n', '\n\n\n']) {
+            expect(releaseChangelog(base + tail, '1.1.0', '2026-11-16')).toBe(want);
+            expect(releaseChangelog((base + tail).replace(/\n/g, '\r\n'), '1.1.0', '2026-11-16')).toBe(
+                want.replace(/\n/g, '\r\n'),
+            );
+        }
+    });
+
+    it('keeps the line ending of the last Unreleased entry when it differs from the heading', () => {
+        const crlfHeading = '## [Unreleased]\r\n\r\n- A\r\n- B\n\n## [1.0.0]\n\n- Old.\n';
+        expect(releaseChangelog(crlfHeading, '1.1.0', '2026-11-16')).toBe(
+            '## [Unreleased]\r\n\r\n## [1.1.0] - 2026-11-16\r\n\r\n- A\r\n- B\n\r\n## [1.0.0]\n\n- Old.\n',
+        );
+        const lfHeading = '## [Unreleased]\n\n- A\n- B\r\n\n## [1.0.0]\n\n- Old.\n';
+        expect(releaseChangelog(lfHeading, '1.1.0', '2026-11-16')).toBe(
+            '## [Unreleased]\n\n## [1.1.0] - 2026-11-16\n\n- A\n- B\r\n\n## [1.0.0]\n\n- Old.\n',
+        );
+    });
+
     it('stops at a version heading of level three left by standard-version', () => {
         const legacy = '### [1.2.6](https://example.com) (2026-04-03)\n\n### Bug Fixes\n\n- Old fix.\n';
         const changelog = `${HEADER}## [Unreleased]\n\n### Fixed\n\n- Fix.\n\n${legacy}`;
