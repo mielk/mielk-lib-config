@@ -34,7 +34,11 @@ const releaseLf = (changelog: string, version: string, date: string): string => 
     if (!/^- /m.test(body))
         throw new Error(`"${UNRELEASED}" has no entries; a version without changes is not released.`);
     const entries = body.trim();
-    return `${changelog.slice(0, bodyStart)}\n\n## [${version}] - ${date}\n\n${entries}\n\n${changelog.slice(bodyEnd)}`;
+    // Entries end with one newline; a blank line follows only when another section comes next, so a file whose
+    // Unreleased is the last section does not end with an empty line (Prettier rejects it).
+    const rest = changelog.slice(bodyEnd);
+    const tail = rest === '' ? '' : `\n${rest}`;
+    return `${changelog.slice(0, bodyStart)}\n\n## [${version}] - ${date}\n\n${entries}\n${tail}`;
 };
 
 /**

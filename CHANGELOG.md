@@ -6,6 +6,10 @@ Entries are written by hand; `npm version` moves them from Unreleased to the rel
 
 ## [Unreleased]
 
+### Fixed
+
+- `mielk-release-changelog` no longer leaves an empty line at the end of CHANGELOG.md when Unreleased is the last section (TASK-270).
+
 ## [1.0.0] - 2026-11-15
 
 ### Added

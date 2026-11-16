@@ -18,7 +18,7 @@ describe('releaseChangelog', () => {
     it('handles an Unreleased section that is the last section', () => {
         const changelog = `${HEADER}## [Unreleased]\n\n### Fixed\n\n- Fix.\n`;
         expect(releaseChangelog(changelog, '1.0.1', '2026-11-13')).toBe(
-            `${HEADER}## [Unreleased]\n\n## [1.0.1] - 2026-11-13\n\n### Fixed\n\n- Fix.\n\n`,
+            `${HEADER}## [Unreleased]\n\n## [1.0.1] - 2026-11-13\n\n### Fixed\n\n- Fix.\n`,
         );
     });
 
@@ -27,6 +27,12 @@ describe('releaseChangelog', () => {
         const released = releaseChangelog(changelog, '1.0.0', '2026-11-15');
         expect(released).toBe(`${HEADER}## [Unreleased]\n\n## [1.0.0] - 2026-11-15\n\n### Added\n\n- First release.\n`);
         expect(released.endsWith('\n\n')).toBe(false);
+    });
+
+    it('ends a CRLF file with a single line break when Unreleased is the only section', () => {
+        const changelog = `${HEADER}## [Unreleased]\n\n### Added\n\n- First release.\n`.replace(/\n/g, '\r\n');
+        const released = releaseChangelog(changelog, '1.0.0', '2026-11-15');
+        expect(released.endsWith('- First release.\r\n')).toBe(true);
     });
 
     it('keeps the Windows line endings of a CRLF file, also in the inserted lines', () => {
@@ -77,7 +83,7 @@ describe('releaseChangelogFile', () => {
         writeFileSync(join(folder, 'CHANGELOG.md'), `${HEADER}## [Unreleased]\n\n- Fix.\n`);
         releaseChangelogFile(folder, '1.0.0', '2026-11-15');
         expect(readFileSync(join(folder, 'CHANGELOG.md'), 'utf8')).toBe(
-            `${HEADER}## [Unreleased]\n\n## [1.0.0] - 2026-11-15\n\n- Fix.\n\n`,
+            `${HEADER}## [Unreleased]\n\n## [1.0.0] - 2026-11-15\n\n- Fix.\n`,
         );
     });
 
