@@ -6,6 +6,10 @@ Entries are written by hand; `npm version` moves them from Unreleased to the rel
 
 ## [Unreleased]
 
+### Fixed
+
+- Command `mielk-release-changelog`: a file with mixed line endings keeps every existing line unchanged (the inserted lines use the ending of the Unreleased heading), and the file ends with one line ending instead of an empty line, also when it had no final newline (TASK-267).
+
 ## [1.0.0] - 2026-11-15
 
 ### Added

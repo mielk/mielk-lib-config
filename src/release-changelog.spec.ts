@@ -18,7 +18,7 @@ describe('releaseChangelog', () => {
     it('handles an Unreleased section that is the last section', () => {
         const changelog = `${HEADER}## [Unreleased]\n\n### Fixed\n\n- Fix.\n`;
         expect(releaseChangelog(changelog, '1.0.1', '2026-11-13')).toBe(
-            `${HEADER}## [Unreleased]\n\n## [1.0.1] - 2026-11-13\n\n### Fixed\n\n- Fix.\n\n`,
+            `${HEADER}## [Unreleased]\n\n## [1.0.1] - 2026-11-13\n\n### Fixed\n\n- Fix.\n`,
         );
     });
 
@@ -30,6 +30,26 @@ describe('releaseChangelog', () => {
             crlf(`${HEADER}## [Unreleased]\n\n## [1.0.1] - 2026-11-15\n\n### Fixed\n\n- Fix.\n\n${OLD}`),
         );
         expect(released.replace(/\r\n/g, '')).not.toContain('\n');
+    });
+
+    it('keeps the line endings of every existing line in a file with mixed endings (T3)', () => {
+        const changelog =
+            '# Changelog\r\n\r\n## [Unreleased]\r\n\r\n- Fix.\r\n\r\n## [1.0.0] - 2026-01-01\n\n- Old fix.\n';
+        expect(releaseChangelog(changelog, '1.0.1', '2026-11-16')).toBe(
+            '# Changelog\r\n\r\n## [Unreleased]\r\n\r\n## [1.0.1] - 2026-11-16\r\n\r\n- Fix.\r\n\r\n' +
+                '## [1.0.0] - 2026-01-01\n\n- Old fix.\n',
+        );
+    });
+
+    it('adds no empty line at the end of a file without a final newline (T4)', () => {
+        const lf = `${HEADER}## [Unreleased]\n\n- Fix.`;
+        expect(releaseChangelog(lf, '1.0.1', '2026-11-16')).toBe(
+            `${HEADER}## [Unreleased]\n\n## [1.0.1] - 2026-11-16\n\n- Fix.\n`,
+        );
+        const crlf = lf.replace(/\n/g, '\r\n');
+        expect(releaseChangelog(crlf, '1.0.1', '2026-11-16')).toBe(
+            `${HEADER}## [Unreleased]\n\n## [1.0.1] - 2026-11-16\n\n- Fix.\n`.replace(/\n/g, '\r\n'),
+        );
     });
 
     it('stops at a version heading of level three left by standard-version', () => {
@@ -70,7 +90,7 @@ describe('releaseChangelogFile', () => {
         writeFileSync(join(folder, 'CHANGELOG.md'), `${HEADER}## [Unreleased]\n\n- Fix.\n`);
         releaseChangelogFile(folder, '1.0.0', '2026-11-15');
         expect(readFileSync(join(folder, 'CHANGELOG.md'), 'utf8')).toBe(
-            `${HEADER}## [Unreleased]\n\n## [1.0.0] - 2026-11-15\n\n- Fix.\n\n`,
+            `${HEADER}## [Unreleased]\n\n## [1.0.0] - 2026-11-15\n\n- Fix.\n`,
         );
     });
 
