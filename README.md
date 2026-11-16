@@ -140,12 +140,13 @@ The folder of the library must be a Git working tree.
 ```bash
 npm run mielk-lib -- sync <library-folder>                  # plan only, changes nothing
 npm run mielk-lib -- sync <library-folder> --apply          # changes the files; clean Git working tree required
+npm run mielk-lib -- sync <library-folder> --apply --force-config  # also replaces a deviating eslint.config.js / vitest.config.ts
 npm run mielk-lib -- sync --check <library-folder>...       # compares libraries with the template, changes nothing
 ```
 
 `sync` writes the fixed files of the template (`.gitattributes`, `.nvmrc`, `.gitignore`, `.prettierignore`,
-`.github/workflows/ci.yml`), the configuration files described above (`tsconfig.json`, `tsconfig.build.json`,
-`eslint.config.js`, `vitest.config.ts`), the fields and scripts of `package.json` in the `package.json` example above, the
+`.github/workflows/ci.yml`), the configuration files described above (`tsconfig.json`, `tsconfig.build.json`; and
+`eslint.config.js`, `vitest.config.ts` when they are missing, see below), the fields and scripts of `package.json` in the `package.json` example above, the
 versions of `@mielk/lib-config` and its peer dependencies in `devDependencies` (the ones of the package installed in
 `mielk-npm-tools`) and `## [Unreleased]` in `CHANGELOG.md`. It deletes the files and dependencies that the package replaces
 (`.prettierrc*`, `.eslintrc*`, `jest.config.*`, `babel.config.*`, `.npmignore`, `scripts/check-pack-files*.ts`,
@@ -154,6 +155,15 @@ versions of `@mielk/lib-config` and its peer dependencies in `devDependencies` (
 `src/`, never commits and never publishes. After `--apply` it runs `npm install`, formats the written files and runs
 `lint`, `typecheck` and `build` (`--skip-checks` leaves these out); errors those commands report in `src/` are the
 library's own work.
+
+`eslint.config.js` and `vitest.config.ts` are treated differently from the other files (decision DEC-217): `sync` never
+overwrites an existing one. A missing file is written from the template. An existing file that deviates from it, or that
+the tool cannot evaluate (e.g. a non-standard form of the call of `mielkEslint` or `mielkVitest`), is only reported, under
+"To correct by hand" in the plan and in the report after `--apply`; the file stays as it is and, because the deviation
+remains, `--apply` ends with exit code 1. Correct such a file by hand, or run `--apply --force-config`, which replaces
+it with the template (`--force-config` is not accepted with `--check`). The old content stays in Git (`git diff`) and the
+notes of `sync` name the settings to move back (extra rules, test or coverage patterns). A file that complies with the
+template, also with additions, is never rewritten.
 
 `sync --check` exits with 0 for a library that complies with the template and with 1 for a deviation, also for a library
 that extends the package but overrides one of its settings (a rule of `REQUIRED_RULES`, the coverage threshold, a
@@ -211,13 +221,18 @@ section 10); `%s` is replaced by `npm` with the version.
 
 3. History: the first release (`1.0.0`) was done by the user: from the tag `v1.0.0` run `npm publish --access public` on the npm
    account with 2FA (the `prepublishOnly` script runs the checks and the package check first). The package does not
-   exist in the registry before, so trusted publishing cannot be configured earlier (`npm:PUB-5`).
-4. After the first release the user sets up the publication without long-lived tokens (`npm:PUB-5`), on npmjs.com in
-   the settings of the package: the trusted publisher (repository `mielk/mielk-lib-config`, workflow file `ci.yml`,
-   direct `npm publish` allowed) and "Require two-factor authentication and disallow tokens". The repository has no
-   npm token in its secrets.
-5. Later releases: the user starts the `CI` workflow on the tag `v<version>` (`workflow_dispatch`); its `publish` job
-   publishes the package with trusted publishing (`npm:PUB-1`, `PUB-5`). Agents have no npm token and do not publish.
+   exist in the registry before, so trusted publishing could not be configured earlier (`npm:PUB-5`).
+4. Current state of the publication settings on npmjs.com (user's information of 2026-11-16, the same for `@mielk/fn`,
+   `@mielk/db` and `@mielk/lib-config`): only "Require two-factor authentication and disallow bypass 2fa tokens" is
+   enabled. Trusted publishing is **not configured**: there is no trusted publisher for repository
+   `mielk/mielk-lib-config` and workflow file `ci.yml`. The repository has no npm token in its secrets. The
+   configuration is deferred (TASK-269); the setting to make then is the trusted publisher (repository
+   `mielk/mielk-lib-config`, workflow file `ci.yml`, direct `npm publish` allowed).
+5. Later releases: until the trusted publisher is configured, the `publish` job of the `CI` workflow cannot publish
+   (no token and no trust relationship), so the user publishes by hand as in step 3, from the tag `v<version>`. After
+   TASK-269 sets up trusted publishing, the user starts the `CI` workflow on the tag `v<version>`
+   (`workflow_dispatch`) and its `publish` job publishes the package without long-lived tokens (`npm:PUB-1`, `PUB-5`).
+   Agents have no npm token and do not publish.
 6. Raise `@mielk/lib-config` in `devDependencies` of `mielk-npm-tools`: `mielk-lib sync` takes the template versions
    from the package installed there, and libraries pick up the new version with `mielk-lib sync`.
 
