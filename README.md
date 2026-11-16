@@ -158,7 +158,7 @@ The package uses its own configuration: `eslint.config.js` and `vitest.config.ts
 
 ## Releasing a new version
 
-The package is at `0.0.0` in the repository; `1.0.0` is its first release. The commit message of a release is
+The package is released: `1.0.0` is its first release (tag `v1.0.0`) and the current version in the repository. The commit message of a release is
 `Release <version> (<TASK-ID>)` followed by the footer of the agent that makes it (`npm:WYD-3`, `CLAUDE.md`
 section 10); `%s` is replaced by `npm` with the version.
 
@@ -166,8 +166,8 @@ section 10); `%s` is replaced by `npm` with the version.
    dependency range that can make the checks of a library fail is a breaking change (major version, entry starting
    with `**Breaking:**` and the migration steps, `npm:SEM-1`, `npm:CHG-3`).
 2. Prepare the version on the current `master`, with a clean working tree (`npm:WYD-1`). The `version` script builds
-   the package and runs `mielk-release-changelog` from `dist`, which moves the entries to the new section. For the
-   first release, `npm version major` turns `0.0.0` into `1.0.0`; later releases use `major`, `minor` or `patch`:
+   the package and runs `mielk-release-changelog` from `dist`, which moves the entries to the new section. The
+   release type is `major`, `minor` or `patch` (the first release, `1.0.0`, was made with `npm version major`):
 
     ```bash
     npm version major -m $'Release %s (<TASK-ID>)
@@ -177,7 +177,7 @@ section 10); `%s` is replaced by `npm` with the version.
     git push --follow-tags # npm:WYD-4
     ```
 
-3. First release (`1.0.0`), done by the user: from the tag `v1.0.0` run `npm publish --access public` on the npm
+3. History: the first release (`1.0.0`) was done by the user: from the tag `v1.0.0` run `npm publish --access public` on the npm
    account with 2FA (the `prepublishOnly` script runs the checks and the package check first). The package does not
    exist in the registry before, so trusted publishing cannot be configured earlier (`npm:PUB-5`).
 4. After the first release the user sets up the publication without long-lived tokens (`npm:PUB-5`), on npmjs.com in
