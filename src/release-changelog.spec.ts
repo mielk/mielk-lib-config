@@ -22,6 +22,13 @@ describe('releaseChangelog', () => {
         );
     });
 
+    it('ends the file with a single newline when Unreleased is the only section (first release)', () => {
+        const changelog = `${HEADER}## [Unreleased]\n\n### Added\n\n- First release.\n`;
+        const released = releaseChangelog(changelog, '1.0.0', '2026-11-15');
+        expect(released).toBe(`${HEADER}## [Unreleased]\n\n## [1.0.0] - 2026-11-15\n\n### Added\n\n- First release.\n`);
+        expect(released.endsWith('\n\n')).toBe(false);
+    });
+
     it('keeps the Windows line endings of a CRLF file, also in the inserted lines', () => {
         const crlf = (text: string): string => text.replace(/\n/g, '\r\n');
         const changelog = crlf(`${HEADER}## [Unreleased]\n\n### Fixed\n\n- Fix.\n\n${OLD}`);
