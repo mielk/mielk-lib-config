@@ -86,7 +86,9 @@ together with `src/**/*.ts`, and adds compiler options it needs for them:
 
 `eslint.config.js`. `rootDir` is required: ESLint finds the `tsconfig.json` of each file from it. `ignores` adds
 patterns to `dist/`, `coverage/` and `reports/`; `allowEnv` lists the files that may read `process.env` (default
-`scripts/**/*.ts`; library code takes configuration as parameters, `ts:BIB-6`). Further configuration objects come
+`scripts/**/*.ts`; library code takes configuration as parameters, `ts:BIB-6`); `allowConsole` lists the files that
+may call `console` (default `scripts/**/*.ts`; elsewhere `no-console` is an error, so library code takes a logger as a
+parameter, e.g. `log: Pick<Console, 'error'> = console`, which the rule does not flag). Further configuration objects come
 after the options and are applied last:
 
 ```js

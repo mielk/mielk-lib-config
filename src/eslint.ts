@@ -20,6 +20,11 @@ export type MielkEslintOptions = {
      * `['scripts/**\/*.ts']`. Library code takes its configuration as parameters (ts:BIB-6).
      */
     allowEnv?: string[];
+    /**
+     * Patterns of files that may call `console`, e.g. repository scripts that print their progress. Default:
+     * `['scripts/**\/*.ts']`. Library code reports through a parameter (e.g. a `log` option), not the console.
+     */
+    allowConsole?: string[];
 };
 
 /** A configuration object of an ESLint flat configuration, as accepted by `defineConfig` of `eslint/config`. */
@@ -44,12 +49,15 @@ export const REQUIRED_RULES: Readonly<Linter.RulesRecord> = {
             message: 'Take configuration as a parameter instead (ts:BIB-6).',
         },
     ],
+    // Library code does not print: it returns results or takes a logger as a parameter.
+    'no-console': 'error',
 };
 
 /**
  * Builds the ESLint flat configuration of a mielk library: `@eslint/js` recommended rules, `recommendedTypeChecked`
  * of `typescript-eslint` with type information from the library's `tsconfig.json`, the rules of ts:LNT-1 as errors
- * and a ban on `process.env` outside the files in `allowEnv`. JavaScript files (e.g. `eslint.config.js`) are linted
+ * a ban on `process.env` outside the files in `allowEnv` and a ban on `console` calls outside the files in
+ * `allowConsole`. JavaScript files (e.g. `eslint.config.js`) are linted
  * without type information.
  *
  * @param options Root folder of the library and optional ignores and files allowed to read the environment.
@@ -69,6 +77,7 @@ export const REQUIRED_RULES: Readonly<Linter.RulesRecord> = {
 export const mielkEslint = (options: MielkEslintOptions, ...extra: MielkEslintExtra[]): Linter.Config[] => {
     if (options.rootDir === '') throw new Error('mielkEslint: rootDir is required; pass import.meta.dirname.');
     const allowEnv = options.allowEnv ?? ['scripts/**/*.ts'];
+    const allowConsole = options.allowConsole ?? ['scripts/**/*.ts'];
     return defineConfig(
         { ignores: [...GENERATED_IGNORES, ...(options.ignores ?? [])] },
         js.configs.recommended,
@@ -87,6 +96,7 @@ export const mielkEslint = (options: MielkEslintOptions, ...extra: MielkEslintEx
             extends: [tseslint.configs.disableTypeChecked],
         },
         ...(allowEnv.length > 0 ? [{ files: allowEnv, rules: { 'no-restricted-properties': 'off' as const } }] : []),
+        ...(allowConsole.length > 0 ? [{ files: allowConsole, rules: { 'no-console': 'off' as const } }] : []),
         ...extra,
     );
 };

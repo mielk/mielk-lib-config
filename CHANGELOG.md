@@ -6,6 +6,10 @@ Entries are written by hand; `npm version` moves them from Unreleased to the rel
 
 ## [Unreleased]
 
+### Added
+
+- Rule `no-console` as an error in `mielkEslint`, with the option `allowConsole` (default `scripts/**/*.ts`). Libraries that did not forbid `console` may get new lint errors (TASK-285).
+
 ## [1.0.0] - 2026-11-15
 
 ### Added

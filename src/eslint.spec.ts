@@ -28,8 +28,16 @@ describe('mielkEslint', () => {
         expect(allowed(mielkEslint({ rootDir: '/lib', allowEnv: [] }))).toEqual([]);
     });
 
+    it('allows console in scripts by default and in the given files otherwise', () => {
+        const allowed = (config: ReturnType<typeof mielkEslint>) =>
+            config.filter((c) => c.rules?.['no-console'] === 'off').map((c) => c.files);
+        expect(allowed(mielkEslint({ rootDir: '/lib' }))).toEqual([['scripts/**/*.ts']]);
+        expect(allowed(mielkEslint({ rootDir: '/lib', allowConsole: ['tools/*.ts'] }))).toEqual([['tools/*.ts']]);
+        expect(allowed(mielkEslint({ rootDir: '/lib', allowConsole: [] }))).toEqual([]);
+    });
+
     it('appends the extra configuration objects after the shared ones', () => {
-        const extra = { files: ['src/**/*.ts'], rules: { 'no-console': 'error' as const } };
+        const extra = { files: ['src/**/*.ts'], rules: { eqeqeq: 'error' as const } };
         const config = mielkEslint({ rootDir: '/lib' }, extra);
         expect(config.at(-1)).toEqual(extra);
     });
@@ -78,6 +86,12 @@ describe('mielkEslint on a library', () => {
 
     it('allows process.env in repository scripts', async () => {
         const code = 'declare const process: { env: Record<string, string> };\nexport const a = process.env;\n';
+        expect(await ruleIds('scripts/tool.ts', code)).toEqual([]);
+    });
+
+    it('reports console calls in library code and allows them in repository scripts', async () => {
+        const code = ["console.log('x');", 'export {};', ''].join('\n');
+        expect(await ruleIds('src/index.ts', code)).toEqual(['no-console']);
         expect(await ruleIds('scripts/tool.ts', code)).toEqual([]);
     });
 
