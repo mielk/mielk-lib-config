@@ -8,7 +8,9 @@ reaches all libraries through a new version of this package.
 
 Files that must stay in the repository of each library (`.gitattributes`, `.nvmrc`, `.gitignore`, `.prettierignore`,
 `.github/workflows/ci.yml`) are not part of this package. They are kept as templates in the private repository
-`mielk-npm-tools`, whose command `mielk-lib sync` applies them together with this package.
+`mielk-npm-tools` (in `templates/`), whose command `mielk-lib sync` applies them together with this package and
+checks a library against the whole template (`mielk-lib sync --check`); see
+[Applying the template with `mielk-lib sync`](#applying-the-template-with-mielk-lib-sync).
 
 ## Requirements
 
@@ -129,10 +131,40 @@ The full `clean` script and the other template files are in `fixtures/sample-lib
 integration test. A library that uses the package has no `.prettierrc*`, `scripts/check-pack-files.ts` or
 `scripts/release-changelog.ts`, and no direct dependencies on `@eslint/js` and `typescript-eslint`.
 
+## Applying the template with `mielk-lib sync`
+
+The command `mielk-lib` is in the private repository `mielk-npm-tools`, which is not published to npm: run it from the
+folder of that repository after `npm ci` (Node.js 24, Git and npm installed), with the library folder as the argument.
+The folder of the library must be a Git working tree.
+
+```bash
+npm run mielk-lib -- sync <library-folder>                  # plan only, changes nothing
+npm run mielk-lib -- sync <library-folder> --apply          # changes the files; clean Git working tree required
+npm run mielk-lib -- sync --check <library-folder>...       # compares libraries with the template, changes nothing
+```
+
+`sync` writes the fixed files of the template (`.gitattributes`, `.nvmrc`, `.gitignore`, `.prettierignore`,
+`.github/workflows/ci.yml`), the configuration files described above (`tsconfig.json`, `tsconfig.build.json`,
+`eslint.config.js`, `vitest.config.ts`), the fields and scripts of `package.json` in the `package.json` example above, the
+versions of `@mielk/lib-config` and its peer dependencies in `devDependencies` (the ones of the package installed in
+`mielk-npm-tools`) and `## [Unreleased]` in `CHANGELOG.md`. It deletes the files and dependencies that the package replaces
+(`.prettierrc*`, `.eslintrc*`, `jest.config.*`, `babel.config.*`, `.npmignore`, `scripts/check-pack-files*.ts`,
+`scripts/release-changelog*.ts`, `jest`, `ts-jest`, `babel-jest`, `@types/jest`, `standard-version`, `@eslint/js`,
+`typescript-eslint`) and prints the settings it drops, so they can be moved by hand when still needed. It never changes
+`src/`, never commits and never publishes. After `--apply` it runs `npm install`, formats the written files and runs
+`lint`, `typecheck` and `build` (`--skip-checks` leaves these out); errors those commands report in `src/` are the
+library's own work.
+
+`sync --check` exits with 0 for a library that complies with the template and with 1 for a deviation, also for a library
+that extends the package but overrides one of its settings (a rule of `REQUIRED_RULES`, the coverage threshold, a
+compiler option, a Prettier option); extra `include`, scripts, compiler options and ESLint rules are allowed. The
+modes, the template elements and the exit codes are in the README of `mielk-npm-tools`, chapter "mielk-lib sync".
+
 ## Updating a library to a new version
 
-1. Raise `@mielk/lib-config` and the peer dependencies in `devDependencies` to the versions of the new release
-   (`mielk-lib sync` in `mielk-npm-tools` does it from the version installed there), then `npm install`.
+1. Raise `@mielk/lib-config` and the peer dependencies in `devDependencies` to the versions of the new release:
+   `mielk-lib sync <library-folder> --apply` does it from the version installed in `mielk-npm-tools` (see above), or do
+   it by hand and run `npm install`.
 2. Read the entries of the new version in [CHANGELOG.md](CHANGELOG.md); a major version lists the migration steps.
 3. Run `format:check`, `lint`, `typecheck`, `test`, `build` and `check:package`. The change touches only
    `devDependencies` and tool files, so the library does not release a new version for it (`npm:CHG-2`).
