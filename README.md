@@ -228,11 +228,11 @@ section 10); `%s` is replaced by `npm` with the version.
    `mielk/mielk-lib-config` and workflow file `ci.yml`. The repository has no npm token in its secrets. The
    configuration is deferred (TASK-269); the setting to make then is the trusted publisher (repository
    `mielk/mielk-lib-config`, workflow file `ci.yml`, direct `npm publish` allowed).
-5. Later releases: until the trusted publisher is configured, the `publish` job of the `CI` workflow cannot publish
-   (no token and no trust relationship), so the user publishes by hand as in step 3, from the tag `v<version>`. After
-   TASK-269 sets up trusted publishing, the user starts the `CI` workflow on the tag `v<version>`
-   (`workflow_dispatch`) and its `publish` job publishes the package without long-lived tokens (`npm:PUB-1`, `PUB-5`).
-   Agents have no npm token and do not publish.
+5. Later releases: configuring the trusted publisher (TASK-269) is a condition of the next release (`npm:PKG-5`).
+   Manual publication of later versions is not allowed. Configure the trusted publisher right before the first release
+   made through CI, because an unused configuration expires after 48 hours. The next release goes through CI: the user
+   starts the `CI` workflow on the tag `v<version>` (`workflow_dispatch`) and its `publish` job publishes the package
+   with provenance and without long-lived tokens (`npm:PUB-1`, `PUB-5`). Agents have no npm token and do not publish.
 6. Raise `@mielk/lib-config` in `devDependencies` of `mielk-npm-tools`: `mielk-lib sync` takes the template versions
    from the package installed there, and libraries pick up the new version with `mielk-lib sync`.
 
