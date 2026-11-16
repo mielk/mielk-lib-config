@@ -6,6 +6,8 @@ Entries are written by hand; `npm version` moves them from Unreleased to the rel
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-16
+
 ### Changed
 
 - **Breaking:** `mielkEslint` reports `no-console` as an error. Migration: remove the `console` calls from library code (take a logger as a parameter), or list the files that may print in the new option `allowConsole` (default `scripts/**/*.ts`) (TASK-285).

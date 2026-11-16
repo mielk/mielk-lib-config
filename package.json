@@ -1,6 +1,6 @@
 {
     "name": "@mielk/lib-config",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "description": "Shared TypeScript, ESLint, Prettier and Vitest configuration and release commands for the mielk npm libraries.",
     "type": "module",
     "engines": {
